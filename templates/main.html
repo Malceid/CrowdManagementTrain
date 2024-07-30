@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+            <ul class="nav-list">
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#"><u>Services</u></a></li>
+                <li><a href="#" class="contact-button">Contact Us</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="video-streams" id="video-container">
+            <div class="video-stream" id="camera1" onclick="openFullscreen(this)">
+                <div class="video-label">Camera 1</div>
+                <img src="{{ url_for('video_feed') }}?camera_number=0" id="videoElement1">
+            </div>
+        </div>
+        <div class="camera-buttons">
+            <button onclick="addCamera(1)">
+                <ion-icon name="videocam-outline"></ion-icon> Add Camera 2
+            </button>
+            <button onclick="addCamera(2)">
+                <ion-icon name="videocam-outline"></ion-icon> Add Camera 3
+            </button>
+            <button onclick="addCamera(3)">
+                <ion-icon name="videocam-outline"></ion-icon> Add Camera 4
+            </button>
+        </div>
+        <div class="other-buttons">
+            <button onclick="window.location.href='{{ url_for('export_log') }}'">
+                <ion-icon name="download-outline"></ion-icon> Export Activity Log
+            </button>
+        </div>
+    </div>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script>
+        let active_cameras = [0];  // Initialize with the first camera
+
+        function addCamera(camera_number) {
+            if (!active_cameras.includes(camera_number)) {
+                fetch(`/add_camera/${camera_number}`)
+                    .then(response => {
+                        if (response.ok) {
+                            active_cameras.push(camera_number);
+
+                            const videoContainer = document.getElementById('video-container');
+                            const videoStream = document.createElement('div');
+                            videoStream.classList.add('video-stream');
+                            videoStream.id = 'camera' + (camera_number + 1);
+                            videoStream.onclick = function() { openFullscreen(this); };
+
+                            const videoLabel = document.createElement('div');
+                            videoLabel.classList.add('video-label');
+                            videoLabel.textContent = 'Camera ' + (camera_number + 1);
+
+                            const videoElement = document.createElement('img');
+                            videoElement.src = `/video_feed?camera_number=${camera_number}`;
+                            videoElement.id = 'videoElement' + (camera_number + 1);
+
+                            videoStream.appendChild(videoLabel);
+                            videoStream.appendChild(videoElement);
+                            videoContainer.appendChild(videoStream);
+
+                            adjustVideoSizes(); // Ensure video sizes adjust after adding a new camera
+                        } else {
+                            console.error('Failed to add camera:', response.statusText);
+                        }
+                    })
+                    .catch(error => console.error('Error adding camera:', error));
+            }
+        }
+
+        function adjustVideoSizes() {
+            const videoStreams = document.getElementsByClassName('video-stream');
+            const width = 540;
+            const height = 295;
+
+            for (let i = 0; i < videoStreams.length; i++) {
+                videoStreams[i].style.width = width + 'px';
+                videoStreams[i].style.height = height + 'px';
+                videoStreams[i].style.display = 'inline-block';
+                videoStreams[i].style.marginRight = '10px';
+
+                const videoElement = videoStreams[i].getElementsByTagName('img')[0];
+                videoElement.style.width = '100%';
+                videoElement.style.height = '100%';
+            }
+        }
+
+        function openFullscreen(element) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) { // Firefox
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) { // IE/Edge
+                element.msRequestFullscreen();
+            }
+        }
+
+    </script>
+</body>
+</html>
